@@ -1,13 +1,28 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
+/**
+ * App.tsx - Aplicativo de Consultas Médicas
+ * Versão 3: Componentização
+ * 
+ * Evolução:
+ * Aula 1 (26/02) → MVP Simples
+ * Aula 2 (04/03) → Integração TypeScript
+ * Aula 3 (06/03) → Componentização VOCÊ ESTÁ AQUI
+ */
 
+import React, { useState } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { StatusBar } from "expo-status-bar";
+
+// Importando a modelagem TypeScript
 import { Especialidade } from "./src/types/especialidade";
 import { Paciente } from "./src/types/paciente";
 import { Medico } from "./src/interfaces/medico";
 import { Consulta } from "./src/interfaces/consulta";
 
-export default function App() {
+// Importando o componente reutilizável
+import { ConsultaCard } from "./src/components";
 
+export default function App() {
+  // Dados base (simulando o que tínhamos no backend)
   const cardiologia: Especialidade = {
     id: 1,
     nome: "Cardiologia",
@@ -30,16 +45,24 @@ export default function App() {
     telefone: "(11) 98765-4321",
   };
 
+  // Estado da consulta
   const [consulta, setConsulta] = useState<Consulta>({
     id: 1,
     medico: medico1,
     paciente: paciente1,
-    data: new Date(2026, 2, 10),
+    data: new Date(2026, 2, 10), // 10/03/2026
     valor: 350,
     status: "agendada",
     observacoes: "Consulta de rotina",
   });
 
+  /**
+   * Funções para manipular a consulta
+   * 
+   * Essas funções serão passadas como props para o componente.
+   * O componente não altera o estado diretamente - ele apenas
+   * "comunica" ao pai (App) que uma ação foi solicitada.
+   */
   function confirmarConsulta() {
     setConsulta({
       ...consulta,
@@ -47,57 +70,93 @@ export default function App() {
     });
   }
 
-  function formatarValor(valor: number): string {
-    return valor.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
+  function cancelarConsulta() {
+    setConsulta({
+      ...consulta,
+      status: "cancelada",
     });
-  }
-
-  function formatarData(data: Date): string {
-    return data.toLocaleDateString("pt-BR");
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Sistema de Consultas</Text>
+      <StatusBar style="light" />
 
-      <View style={styles.card}>
-        <Text>Paciente: {consulta.paciente.nome}</Text>
-        <Text>Médico: {consulta.medico.nome}</Text>
-        <Text>Especialidade: {consulta.medico.especialidade.nome}</Text>
-        <Text>Data: {formatarData(consulta.data)}</Text>
-        <Text>Valor: {formatarValor(consulta.valor)}</Text>
-        <Text>Status: {consulta.status}</Text>
-        <Text>Observações: {consulta.observacoes}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <Text style={styles.titulo}>Sistema de Consultas</Text>
+          <Text style={styles.subtitulo}>Consulta #{consulta.id}</Text>
+        </View>
 
-        {consulta.status === "agendada" && (
-          <Button title="Confirmar Consulta" onPress={confirmarConsulta} />
-        )}
-      </View>
+        {/* 
+          Componente ConsultaCard
+          
+          Veja como ficou mais simples!
+          Antes: ~100 linhas de JSX no App.tsx
+          Agora: 1 componente reutilizável
+          
+          Props:
+          - consulta: objeto com todos os dados
+          - onConfirmar: função a ser chamada ao confirmar
+          - onCancelar: função a ser chamada ao cancelar
+        */}
+        <ConsultaCard
+          consulta={consulta}
+          onConfirmar={confirmarConsulta}
+          onCancelar={cancelarConsulta}
+        />
+
+      </ScrollView>
     </View>
   );
 }
 
+/**
+ * Estilos do App
+ * 
+ * Note que removemos TODOS os estilos do card!
+ * Eles agora estão encapsulados no componente ConsultaCard.
+ * 
+ * App.tsx agora só tem estilos de layout geral:
+ * - Container principal
+ * - Cabeçalho
+ * - Rodapé
+ */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#79059C",
   },
-
-  titulo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-
-  card: {
-    width: "85%",
+  scrollContent: {
     padding: 20,
-    borderWidth: 1,
-    borderRadius: 8,
-    borderColor: "#ccc",
+    paddingTop: 60,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  titulo: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  subtitulo: {
+    fontSize: 18,
+    color: "#fff",
+    opacity: 0.9,
+  },
+  rodape: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+  },
+  rodapeTexto: {
+    fontSize: 12,
+    color: "#fff",
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 4,
   },
 });
